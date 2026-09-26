@@ -1,96 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>StockSense</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
-<style>
-  :root{
-    --bg:#0c0f14; --panel:#12161d; --panel2:#171c25; --line:#232a35;
-    --text:#e9eef5; --muted:#8b95a5; --accent:#3d84ff; --accent-dim:#132043;
-    --ok:#2fbf71; --warn:#e0a52c; --bad:#e5484d;
-  }
-  *{box-sizing:border-box;}
-  html,body{height:100%;margin:0;}
-  body{background:#05070a;color:var(--text);font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    display:flex;justify-content:center;padding:24px 12px;min-height:100vh;
-    padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
-  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:#2a323d;border-radius:3px;}
-  button,input{font-family:inherit;}
-  .device{width:100%;max-width:400px;height:800px;background:var(--bg);border-radius:30px;
-    border:1px solid #1c232d;box-shadow:0 30px 70px rgba(0,0,0,.6);overflow:hidden;
-    display:flex;flex-direction:column;position:relative;}
-  @media (max-width:460px){.device{height:100dvh;border-radius:0;border:none;}}
-  .head{flex:none;padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;
-    align-items:center;justify-content:space-between;gap:10px;}
-  .head .titles{display:flex;flex-direction:column;}
-  .head .app-name{font-size:15px;font-weight:700;}
-  .head .app-sub{font-size:11px;color:var(--muted);}
-  .head-icons{display:flex;gap:10px;align-items:center;}
-  .icon-btn{width:30px;height:30px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);
-    color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:13px;}
-  .avatar{width:30px;height:30px;border-radius:50%;background:#26313f;display:flex;align-items:center;
-    justify-content:center;font-size:11px;font-weight:700;color:var(--text);flex:none;}
-  .body{flex:1;overflow-y:auto;padding:14px 16px 18px;}
-  .tabbar{flex:none;display:flex;border-top:1px solid var(--line);background:var(--panel);padding:8px 6px;}
-  .tabbar button{flex:1;background:none;border:none;color:var(--muted);display:flex;flex-direction:column;
-    align-items:center;gap:3px;font-size:9.5px;padding:6px 2px;border-radius:8px;}
-  .tabbar button.active{color:var(--accent);}
-  .tabbar .ico{font-size:16px;}
-  .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px;}
-  .kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
-  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;}
-  .kpi .l{font-size:10px;color:var(--muted);margin-bottom:6px;}
-  .kpi .v{font-size:19px;font-weight:700;}
-  .kpi .d{font-size:10px;margin-top:4px;}
-  .up{color:var(--ok);} .warnc{color:var(--warn);} .badc{color:var(--bad);}
-  .pill{display:inline-block;padding:2.5px 8px;border-radius:20px;font-size:9.5px;font-weight:700;}
-  .pill.ok{background:rgba(47,191,113,.15);color:var(--ok);}
-  .pill.warn{background:rgba(224,165,44,.15);color:var(--warn);}
-  .pill.bad{background:rgba(229,72,77,.15);color:var(--bad);}
-  .pill.muted{background:#1c232d;color:var(--muted);}
-  .chips{display:flex;gap:7px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;}
-  .chip{flex:none;background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:8px;
-    padding:5px 11px;font-size:11px;white-space:nowrap;}
-  .chip.active{background:var(--accent-dim);color:#9dc0ff;border-color:var(--accent);}
-  .sec-title{font-size:12px;font-weight:700;margin:14px 0 8px;color:var(--text);}
-  .sec-title:first-child{margin-top:0;}
-  .item{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);}
-  .item:last-child{border:none;}
-  .item .name{font-size:12.5px;font-weight:600;}
-  .item .meta{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.5;}
-  .row-actions{display:flex;gap:6px;margin-top:8px;}
-  .btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:700;flex:1;}
-  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text);}
-  .btn.bad{background:rgba(229,72,77,.15);color:var(--bad);border:1px solid rgba(229,72,77,.3);}
-  .field{margin-bottom:12px;}
-  .field label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:5px;}
-  .field input,.field select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
-    padding:9px 11px;color:var(--text);font-size:12.5px;outline:none;}
-  .field input:focus{border-color:var(--accent);}
-  .toggle{width:34px;height:19px;border-radius:20px;position:relative;flex:none;border:1px solid var(--line);}
-  .toggle.on{background:var(--accent);border-color:var(--accent);}
-  .toggle.off{background:#1c232d;}
-  .toggle .dot{position:absolute;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.15s;}
-  .toggle.on .dot{left:17px;} .toggle.off .dot{left:2px;}
-  .badge-top{display:inline-block;background:var(--accent-dim);color:#9dc0ff;font-size:9.5px;font-weight:700;
-    padding:3px 9px;border-radius:20px;margin-bottom:10px;}
-  .progress{height:5px;background:#1c232d;border-radius:3px;margin:6px 0 14px;overflow:hidden;}
-  .progress > div{height:100%;background:var(--accent);}
-  .role-card{border:1px solid var(--line);border-radius:10px;padding:10px 11px;margin-bottom:8px;}
-  .role-card.sel{border-color:var(--accent);background:#101c33;}
-  .req{font-size:10px;color:var(--muted);margin:2px 0;}
-  .conn{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--muted);}
-  .conn .dot2{width:6px;height:6px;border-radius:50%;}
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script type="text/babel" data-presets="react">
-const {useState,useEffect} = React;
+import { useState, useEffect } from "react";
+import "./App.css";
+
+
 
 /* =========================================================
    BACKEND CONNECTION LAYER
@@ -99,7 +10,7 @@ const {useState,useEffect} = React;
    (no backend running, network error, etc.) it falls back
    to local demo data so the UI still works standalone.
 ========================================================= */
-const API_BASE = window.STOCKSENSE_API_BASE || "http://localhost:4000/api";
+const API_BASE = window.STOCKSENSE_API_BASE || "http://localhost:5000/api";
 
 async function apiFetch(path, options={}){
   try{
@@ -196,8 +107,8 @@ function Toggle({on}){ return <div className={"toggle "+(on?"on":"off")}><div cl
 
 /* ---------- LOGIN ---------- */
 function Login({onLogin,goSignup}){
-  const [id,setId]=useState("alex.rivera@stocksense.co");
-  const [pw,setPw]=useState("supersecret10");
+  const [id,setId]=useState("");
+  const [pw,setPw]=useState("");
   const [busy,setBusy]=useState(false);
   const [err,setErr]=useState("");
 
@@ -205,11 +116,11 @@ function Login({onLogin,goSignup}){
     setBusy(true); setErr("");
     const result = await apiFetch("/auth/login", {
       method:"POST",
-      body: JSON.stringify({identifier:id, password:pw}),
+      body: JSON.stringify({email:id, password:pw}),
     });
     setBusy(false);
     // No backend reachable -> still let the demo proceed with local session.
-    if(!result){ onLogin({demo:true}); return; }
+    if(!result){ onLogin({demo:true, user:{name:id.split("@")[0], email:id}}); return; }
     if(result.token){ onLogin({demo:false, user:result.user}); }
     else { setErr(result.message || "Invalid credentials."); }
   }
@@ -308,7 +219,7 @@ function Signup({goLogin}){
 }
 
 /* ---------- HEADER ---------- */
-function Head({title,sub,badge,live}){
+function Head({title,sub,badge,live,user}){
   return (
     <div className="head">
       <div className="titles">
@@ -319,18 +230,18 @@ function Head({title,sub,badge,live}){
         <ConnBadge live={live}/>
         {badge && <span className="pill ok" style={{fontWeight:700}}>{badge}</span>}
         <div className="icon-btn">🔔</div>
-        <div className="avatar">AR</div>
+        <div className="avatar">{user?.name ? user.name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase() : (user?.email ? user.email[0].toUpperCase() : "U")}</div>
       </div>
     </div>
   );
 }
 
 /* ---------- DASHBOARD ---------- */
-function Dashboard(){
+function Dashboard({user}){
   const [data,live] = useApiData("/dashboard", FALLBACK_DASHBOARD);
   const {kpis,zones,manifests} = data;
   return (<>
-    <Head title="StockSense" sub="Main Hub (WH-01)" live={live}/>
+    <Head title="StockSense" sub={user?.email || "Main Hub (WH-01)"} live={live} user={user}/>
     <div className="body">
       <div className="kpi-row">
         <div className="kpi"><div className="l">Stock in hand</div><div className="v">{kpis.stock}</div><div className="d up">{kpis.stockDelta}</div></div>
@@ -461,17 +372,17 @@ function Transfers(){
 }
 
 /* ---------- SETTINGS ---------- */
-function Settings({onLogout}){
+function Settings({onLogout,user}){
   const [data,live] = useApiData("/settings", FALLBACK_SETTINGS);
   const {profile,ops,sec} = data;
   return (<>
-    <Head title="Settings &amp; Configuration" sub="Warehouse nodes, hardware &amp; operator preferences" live={live}/>
+    <Head title="Settings &amp; Configuration" sub={user?.email || "Warehouse nodes, hardware & operator preferences"} live={live} user={user}/>
     <div className="body">
       <div className="card">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{display:"flex",gap:10}}>
-            <div className="avatar" style={{width:38,height:38}}>AR</div>
-            <div><div className="name">{profile.name}</div><div className="meta">{profile.meta}</div></div>
+            <div className="avatar" style={{width:38,height:38}}>{user?.name ? user.name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase() : (user?.email ? user.email[0].toUpperCase() : "U")}</div>
+            <div><div className="name">{user?.name || profile.name}</div><div className="meta">{user?.email || profile.meta}</div></div>
           </div>
           <span style={{fontSize:10.5,color:"var(--accent)"}}>Switch</span>
         </div>
@@ -518,14 +429,26 @@ function Settings({onLogout}){
 
 /* ---------- APP ---------- */
 function App(){
-  const [screen,setScreen]=useState("login"); // login | signup | app
+  const [screen,setScreen]=useState("login");
   const [view,setView]=useState("dashboard");
-  if(screen==="login") return <div className="device"><Login onLogin={()=>setScreen("app")} goSignup={()=>setScreen("signup")}/></div>;
+  const [currentUser,setCurrentUser]=useState(null);
+
+  function handleLogin(session){
+    setCurrentUser(session?.user || null);
+    setScreen("app");
+  }
+
+  if(screen==="login") return <div className="device"><Login onLogin={handleLogin} goSignup={()=>setScreen("signup")}/></div>;
   if(screen==="signup") return <div className="device"><Signup goLogin={()=>setScreen("login")}/></div>;
-  const views={dashboard:<Dashboard/>,products:<Products/>,operations:<Operations/>,
-    transfers:<Transfers/>,settings:<Settings onLogout={()=>setScreen("login")}/>};
-  const tabs=[["dashboard","▦","Dashboard"],["operations","⇄","Operations"],["products","📦","Products"],
-    ["transfers","⇌","Transfers"],["settings","⚙","Settings"]];
+
+  const views={
+    dashboard:<Dashboard user={currentUser}/>,
+    products:<Products/>,
+    operations:<Operations/>,
+    transfers:<Transfers/>,
+    settings:<Settings user={currentUser} onLogout={()=>{setCurrentUser(null);setScreen("login");}}/>
+  };
+  const tabs=[["dashboard","▦","Dashboard"],["operations","⇄","Operations"],["products","📦","Products"],["transfers","⇌","Transfers"],["settings","⚙","Settings"]];
   return (
     <div className="device">
       {views[view]}
@@ -540,7 +463,4 @@ function App(){
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
-</body>
-</html>
+export default App;
