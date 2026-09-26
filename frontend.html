@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>StockSense</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0f14; --panel:#12161d; --panel2:#171c25; --line:#232a35;
+    --text:#e9eef5; --muted:#8b95a5; --accent:#3d84ff; --accent-dim:#132043;
+    --ok:#2fbf71; --warn:#e0a52c; --bad:#e5484d;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{background:#05070a;color:var(--text);font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    display:flex;justify-content:center;padding:24px 12px;min-height:100vh;
+    padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
+  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:#2a323d;border-radius:3px;}
+  button,input{font-family:inherit;}
+  .device{width:100%;max-width:400px;height:800px;background:var(--bg);border-radius:30px;
+    border:1px solid #1c232d;box-shadow:0 30px 70px rgba(0,0,0,.6);overflow:hidden;
+    display:flex;flex-direction:column;position:relative;}
+  @media (max-width:460px){.device{height:100dvh;border-radius:0;border:none;}}
+  .head{flex:none;padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;
+    align-items:center;justify-content:space-between;gap:10px;}
+  .head .titles{display:flex;flex-direction:column;}
+  .head .app-name{font-size:15px;font-weight:700;}
+  .head .app-sub{font-size:11px;color:var(--muted);}
+  .head-icons{display:flex;gap:10px;align-items:center;}
+  .icon-btn{width:30px;height:30px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);
+    color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .avatar{width:30px;height:30px;border-radius:50%;background:#26313f;display:flex;align-items:center;
+    justify-content:center;font-size:11px;font-weight:700;color:var(--text);flex:none;}
+  .body{flex:1;overflow-y:auto;padding:14px 16px 18px;}
+  .tabbar{flex:none;display:flex;border-top:1px solid var(--line);background:var(--panel);padding:8px 6px;}
+  .tabbar button{flex:1;background:none;border:none;color:var(--muted);display:flex;flex-direction:column;
+    align-items:center;gap:3px;font-size:9.5px;padding:6px 2px;border-radius:8px;}
+  .tabbar button.active{color:var(--accent);}
+  .tabbar .ico{font-size:16px;}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;}
+  .kpi .l{font-size:10px;color:var(--muted);margin-bottom:6px;}
+  .kpi .v{font-size:19px;font-weight:700;}
+  .kpi .d{font-size:10px;margin-top:4px;}
+  .up{color:var(--ok);} .warnc{color:var(--warn);} .badc{color:var(--bad);}
+  .pill{display:inline-block;padding:2.5px 8px;border-radius:20px;font-size:9.5px;font-weight:700;}
+  .pill.ok{background:rgba(47,191,113,.15);color:var(--ok);}
+  .pill.warn{background:rgba(224,165,44,.15);color:var(--warn);}
+  .pill.bad{background:rgba(229,72,77,.15);color:var(--bad);}
+  .pill.muted{background:#1c232d;color:var(--muted);}
+  .chips{display:flex;gap:7px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;}
+  .chip{flex:none;background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:5px 11px;font-size:11px;white-space:nowrap;}
+  .chip.active{background:var(--accent-dim);color:#9dc0ff;border-color:var(--accent);}
+  .sec-title{font-size:12px;font-weight:700;margin:14px 0 8px;color:var(--text);}
+  .sec-title:first-child{margin-top:0;}
+  .item{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .item:last-child{border:none;}
+  .item .name{font-size:12.5px;font-weight:600;}
+  .item .meta{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.5;}
+  .row-actions{display:flex;gap:6px;margin-top:8px;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:700;flex:1;}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text);}
+  .btn.bad{background:rgba(229,72,77,.15);color:var(--bad);border:1px solid rgba(229,72,77,.3);}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:5px;}
+  .field input,.field select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px;color:var(--text);font-size:12.5px;outline:none;}
+  .field input:focus{border-color:var(--accent);}
+  .toggle{width:34px;height:19px;border-radius:20px;position:relative;flex:none;border:1px solid var(--line);}
+  .toggle.on{background:var(--accent);border-color:var(--accent);}
+  .toggle.off{background:#1c232d;}
+  .toggle .dot{position:absolute;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.15s;}
+  .toggle.on .dot{left:17px;} .toggle.off .dot{left:2px;}
+  .badge-top{display:inline-block;background:var(--accent-dim);color:#9dc0ff;font-size:9.5px;font-weight:700;
+    padding:3px 9px;border-radius:20px;margin-bottom:10px;}
+  .progress{height:5px;background:#1c232d;border-radius:3px;margin:6px 0 14px;overflow:hidden;}
+  .progress > div{height:100%;background:var(--accent);}
+  .role-card{border:1px solid var(--line);border-radius:10px;padding:10px 11px;margin-bottom:8px;}
+  .role-card.sel{border-color:var(--accent);background:#101c33;}
+  .req{font-size:10px;color:var(--muted);margin:2px 0;}
+  .conn{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--muted);}
+  .conn .dot2{width:6px;height:6px;border-radius:50%;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect} = React;
+
+/* =========================================================
+   BACKEND CONNECTION LAYER
+   Point API_BASE at your running server (see server.js).
+   Every screen calls the API first; if the request fails
+   (no backend running, network error, etc.) it falls back
+   to local demo data so the UI still works standalone.
+========================================================= */
+const API_BASE = window.STOCKSENSE_API_BASE || "http://localhost:4000/api";
+
+async function apiFetch(path, options={}){
+  try{
+    const res = await fetch(API_BASE+path, {
+      headers:{"Content-Type":"application/json", ...(options.headers||{})},
+      ...options,
+    });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return await res.json();
+  }catch(err){
+    return null; // caller falls back to demo data
+  }
+}
+
+function useApiData(path, fallback){
+  const [data,setData] = useState(fallback);
+  const [live,setLive] = useState(false);
+  useEffect(()=>{
+    let cancelled=false;
+    apiFetch(path).then(d=>{
+      if(cancelled) return;
+      if(d){ setData(d); setLive(true); } else { setLive(false); }
+    });
+    return ()=>{cancelled=true;};
+  },[path]);
+  return [data,live];
+}
+
+function ConnBadge({live}){
+  return (
+    <span className="conn">
+      <span className="dot2" style={{background: live? "var(--ok)":"var(--muted)"}}/>
+      {live? "API connected" : "Demo data"}
+    </span>
+  );
+}
+
+/* ---------- fallback / demo data (used until the backend responds) ---------- */
+const FALLBACK_DASHBOARD = {
+  kpis:{stock:"4,820",stockDelta:"▲ 12%",shortages:"14",shortagesDelta:"3 urgent",
+    receipts:"8",receiptsDelta:"2 arriving today",deliveries:"19",deliveriesDelta:"6 ready · Carrier"},
+  zones:[["Zone A · Bays","8/10 Active · Bay Storage"],["Dock 1","Cold Storage"]],
+  manifests:[
+    ["REC-2024-0088","Apex Industrial Metals Ltd.","100 kg High-Grade Steel Rods","Bay 4 · North","Ready","ok"],
+    ["DEL-2024-0142","10 Ergonomic Mesh Chairs","Acme Corp Logistics · Order #PO-9140","Dock 1","Waiting Pickup","warn"],
+    ["TRF-2024-0033","50 Circuit Boards MCU-X9","Main Store → Production Rack B","Logged 14:23 PM","In Transit","warn"],
+    ["ADJ-2024-0012","-3 kg Damaged Steel","Scrap write-off · Approved by supervisor","","Done","muted"],
+  ],
+};
+const FALLBACK_PRODUCTS = {
+  kpis:{skus:"342",low:"14!",facilities:"4 Hubs"},
+  products:[
+    ["High-Grade Steel Rods","WSTL-ROD-0102","Available count 100 kg · 2 Locations",null,"ok","In Stock",["Transfer","Adjust","Details"]],
+    ["OmniTech Components","MFRN-CHR-882","Min rule 15 pcs · Warehouse Zone B1 5pcs, Downtown Showroom 3pcs","8 pcs","bad","Low Stock",["View Locations","Reorder Now"]],
+    ["Industrial Circuit Board PCB-X","MFRLE-PCB-990","Clean Room Rack B · Last cycle count 2h ago","240 pcs","ok","In Stock · Lead time 1d",["Transfer","Details"]],
+    ["Heavy Duty Corrugated Boxes 12x12","MFPKG-BOX-1212","Restocking Alert triggered","0 pcs","bad","Out of Stock",["Reorder Now"]],
+  ],
+};
+const FALLBACK_OPERATIONS = {
+  items:[
+    ["PREC-8842","PO-9812 · Apex Industrial Metals Ltd.","100 kg Steel Rods · SKU-STL-01 · Validated by Alex R.","+100 Units · Ledger","Done","ok"],
+    ["PREC-8845","PO-9817 · OmniTech Components","25x Power Supply Units · SKU-PSU-450 · 0/25 Checked","Today, 2:00 PM · Receiving Dock 1","Waiting","warn"],
+    ["PREC-8848","INTERNAL NOTE · Global Pack Solutions","500x Corrugated Boxes 12x12 · SKU-BOX-012","Tomorrow, 09:00 AM · Warehouse B","Draft","muted"],
+  ],
+  steps:[["Create Receipt","Log reference PO"],["Assign Items","Supplier & SKU"],
+    ["Count & Scan","Input quantities"],["Validate","Auto-updates stock"]],
+};
+const FALLBACK_TRANSFERS = {
+  lifecycle:[["Step 1 · Vendor → Main","Done","ok"],["Step 2 · Main → Production","Ready to Move","warn"]],
+  manifests:[
+    ["#TRF-9021 · Standard Move","Ready","warn","High-Grade Steel Rods · 30 kg","SOURCE: Main WH (Rack 04-A) → Production Floor (Rack P3)"],
+    ["#TRF-9018 · Refrigerated","Delivered Batch 1","ok","Thermal Paste Syringes · 150 units","Cold Vault (Zone C) → Rack B1"],
+  ],
+};
+const FALLBACK_SETTINGS = {
+  profile:{name:"Alex Rivera",meta:"Lead Inventory Manager · EMP-4081 · WH-2 Sector A"},
+  ops:[["Critical Stock Alerts","Notify when safety stock dips under 15%",true],
+    ["Auto-Reconcile on Doc Transfer","Update ledger the instant scans confirm",true],
+    ["Strict 3-Step Count Verification","Enforce secondary supervisor sign-off above $500",false]],
+  sec:[["Biometric Unlock","Expose password during active shift",true],
+    ["Offline Manifest Cache","Last synced 3 minutes ago",true]],
+};
+
+function Item({name,meta,right,tone="muted",children}){
+  return (
+    <div className="item">
+      <div><div className="name">{name}</div>{meta && <div className="meta">{meta}</div>}{children}</div>
+      {right && <span className={"pill "+tone}>{right}</span>}
+    </div>
+  );
+}
+
+function Toggle({on}){ return <div className={"toggle "+(on?"on":"off")}><div className="dot"/></div>; }
+
+/* ---------- LOGIN ---------- */
+function Login({onLogin,goSignup}){
+  const [id,setId]=useState("alex.rivera@stocksense.co");
+  const [pw,setPw]=useState("supersecret10");
+  const [busy,setBusy]=useState(false);
+  const [err,setErr]=useState("");
+
+  async function submit(){
+    setBusy(true); setErr("");
+    const result = await apiFetch("/auth/login", {
+      method:"POST",
+      body: JSON.stringify({identifier:id, password:pw}),
+    });
+    setBusy(false);
+    // No backend reachable -> still let the demo proceed with local session.
+    if(!result){ onLogin({demo:true}); return; }
+    if(result.token){ onLogin({demo:false, user:result.user}); }
+    else { setErr(result.message || "Invalid credentials."); }
+  }
+
+  return (
+    <div className="body" style={{display:"flex",flexDirection:"column",justifyContent:"center",minHeight:"100%"}}>
+      <div style={{textAlign:"center",marginBottom:18}}>
+        <div style={{width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,#3d84ff,#7c5cff)",
+          margin:"0 auto 12px",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:22}}>S</div>
+        <div style={{fontSize:19,fontWeight:700}}>StockSense</div>
+        <div style={{fontSize:10.5,color:"var(--muted)",letterSpacing:.4,marginTop:2}}>ENTERPRISE INVENTORY &amp; WAREHOUSE SYSTEM</div>
+        <div className="badge-top" style={{marginTop:10}}>WAREHOUSE STAFF &amp; MANAGER PORTAL</div>
+      </div>
+      <div className="field"><label>Work email or employee ID</label>
+        <input value={id} onChange={e=>setId(e.target.value)} placeholder="you@stocksense.co / EMP-4081"/></div>
+      <div className="field">
+        <div style={{display:"flex",justifyContent:"space-between"}}><label>Password</label>
+          <span style={{fontSize:10.5,color:"var(--accent)"}}>Forgot Password? (OTP Reset)</span></div>
+        <input type="password" value={pw} onChange={e=>setPw(e.target.value)}/>
+      </div>
+      {err && <div style={{color:"var(--bad)",fontSize:11,marginBottom:10}}>{err}</div>}
+      <button className="btn" disabled={busy}
+        style={{alignSelf:"center",flex:"0 0 auto",width:"auto",padding:"7px 16px",fontSize:11,marginBottom:14,opacity:busy?.6:1}}
+        onClick={submit}>{busy? "Signing in…" : "Sign In to Warehouse →"}</button>
+      <div style={{textAlign:"center",fontSize:10,color:"var(--muted)",margin:"4px 0 14px"}}>— OR FAST TAP —</div>
+      <button className="btn ghost"
+        style={{alignSelf:"center",flex:"0 0 auto",width:"auto",padding:"7px 16px",fontSize:11,marginBottom:18}}>⌗ Scan Badge / RFID Card</button>
+      <div style={{textAlign:"center",fontSize:11.5,color:"var(--muted)"}}>
+        Don't have an account? <span style={{color:"var(--accent)"}} onClick={goSignup}>Sign Up / Request Access</span>
+      </div>
+      <div style={{textAlign:"center",fontSize:9.5,color:"var(--muted)",marginTop:16}}>🔒 256-bit Encrypted · SOC2 Type II Certified</div>
+    </div>
+  );
+}
+
+/* ---------- SIGNUP ---------- */
+function Signup({goLogin}){
+  const [role,setRole]=useState(0);
+  const [form,setForm]=useState({name:"",email:"",empId:"",hub:"",pw:"",pw2:""});
+  const [status,setStatus]=useState("");
+  const roles=[["Warehouse Operator / Picker","Scanning, picking, dispatch packing and dock work"],
+    ["Inventory Manager","Stock reconciliation, purchase receipts, relocations"],
+    ["Auditor / Supervisor","Quality control, shrinkage audits, compliance logs"]];
+  const set = k => e => setForm({...form,[k]:e.target.value});
+
+  async function submit(){
+    setStatus("Creating account…");
+    const result = await apiFetch("/auth/signup", {
+      method:"POST",
+      body: JSON.stringify({...form, role: roles[role][0]}),
+    });
+    setStatus(result ? "Account created — check your email for the OTP." : "Saved locally (backend offline) — demo mode.");
+  }
+
+  return (
+    <div className="body">
+      <div className="badge-top">FACILITY ONBOARDING</div>
+      <div style={{fontSize:17,fontWeight:700,marginBottom:2}}>Create Operator Account</div>
+      <div style={{fontSize:11,color:"var(--muted)"}}>Join your facility's inventory management system and access real-time manifest tracking</div>
+      <div style={{fontSize:10,color:"var(--muted)",marginTop:10}}>STEP 1 OF 2 · Profile &amp; Facility Assignment</div>
+      <div className="progress"><div style={{width:"50%"}}/></div>
+
+      <div className="sec-title">Personal &amp; Facility Details</div>
+      <div className="field"><label>Full legal name</label><input value={form.name} onChange={set("name")} placeholder="e.g. Marcus Kelly"/></div>
+      <div className="field"><label>Work email</label><input value={form.email} onChange={set("email")} placeholder="m.kelly@logistics.com"/></div>
+      <div className="field"><label>Employer ID</label><input value={form.empId} onChange={set("empId")} placeholder="E.G. EMP-8824"/></div>
+      <div className="field"><label>Primary warehouse hub</label><input value={form.hub} onChange={set("hub")} placeholder="Select assigned location..."/></div>
+
+      <div className="sec-title">Assigned Role · Access clearance</div>
+      {roles.map(([t,d],i)=>(
+        <div key={t} className={"role-card"+(role===i?" sel":"")} onClick={()=>setRole(i)}>
+          <div className="name" style={{fontSize:12}}>{t}</div>
+          <div className="meta">{d}</div>
+        </div>
+      ))}
+
+      <div className="sec-title">Security &amp; Credentials</div>
+      <div className="field"><label>Operator password</label><input type="password" value={form.pw} onChange={set("pw")} placeholder="Enter secure password"/></div>
+      <div className="field"><label>Confirm password</label><input type="password" value={form.pw2} onChange={set("pw2")} placeholder="Re-type password"/></div>
+      <div className="req">SECURITY REQUIREMENTS</div>
+      <div className="req">✓ 8+ characters length</div>
+      <div className="req">✓ At least 1 numerical char</div>
+      <div className="req">✓ 1 uppercase letter (A–Z)</div>
+
+      <label style={{display:"flex",gap:8,fontSize:10.5,color:"var(--muted)",margin:"14px 0"}}>
+        <input type="checkbox" style={{width:"auto",marginTop:2}}/>
+        I certify that I have read and agree to the Warehouse Security &amp; Inventory Handling SOPs and OSHA regulatory requirements.
+      </label>
+      {status && <div style={{fontSize:11,color:"var(--accent)",marginBottom:10}}>{status}</div>}
+      <button className="btn" style={{width:"100%",padding:11,marginBottom:12}} onClick={submit}>Create Account &amp; Verify OTP →</button>
+      <div style={{textAlign:"center",fontSize:11.5,color:"var(--muted)"}}>
+        Already registered with StockSense? <span style={{color:"var(--accent)"}} onClick={goLogin}>Sign in instead</span>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- HEADER ---------- */
+function Head({title,sub,badge,live}){
+  return (
+    <div className="head">
+      <div className="titles">
+        <div className="app-name">{title}</div>
+        <div className="app-sub">{sub}</div>
+      </div>
+      <div className="head-icons">
+        <ConnBadge live={live}/>
+        {badge && <span className="pill ok" style={{fontWeight:700}}>{badge}</span>}
+        <div className="icon-btn">🔔</div>
+        <div className="avatar">AR</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- DASHBOARD ---------- */
+function Dashboard(){
+  const [data,live] = useApiData("/dashboard", FALLBACK_DASHBOARD);
+  const {kpis,zones,manifests} = data;
+  return (<>
+    <Head title="StockSense" sub="Main Hub (WH-01)" live={live}/>
+    <div className="body">
+      <div className="kpi-row">
+        <div className="kpi"><div className="l">Stock in hand</div><div className="v">{kpis.stock}</div><div className="d up">{kpis.stockDelta}</div></div>
+        <div className="kpi"><div className="l">Shortages</div><div className="v badc">{kpis.shortages}</div><div className="d badc">{kpis.shortagesDelta}</div></div>
+        <div className="kpi"><div className="l">Receipts</div><div className="v">{kpis.receipts}</div><div className="d warnc">{kpis.receiptsDelta}</div></div>
+        <div className="kpi"><div className="l">Deliveries</div><div className="v">{kpis.deliveries}</div><div className="d warnc">{kpis.deliveriesDelta}</div></div>
+      </div>
+      <div className="sec-title">Live Yard &amp; Storage</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:6}}>
+        {zones.map(([n,d])=>(
+          <div className="card" style={{marginBottom:0}} key={n}><div className="name" style={{fontSize:12}}>{n}</div><div className="meta">{d}</div></div>
+        ))}
+      </div>
+      <div className="chips">
+        {["All Ops","Receipts (8)","Waiting (10)","Ready (5)","Done (6)"].map((c,i)=>(
+          <div key={c} className={"chip"+(i===0?" active":"")}>{c}</div>
+        ))}
+      </div>
+      <div className="sec-title" style={{marginTop:0}}>Recent Manifests</div>
+      <div className="card">
+        {manifests.map(m=>(
+          <Item key={m[0]} name={m[0]} right={m[4]} tone={m[5]} meta={<>{m[1]}<br/>{m[2]} {m[3] && "· "+m[3]}</>}/>
+        ))}
+      </div>
+      <div className="card" style={{textAlign:"center"}}>
+        <div className="name" style={{marginBottom:6}}>Ready for Scan</div>
+        <div className="meta" style={{marginBottom:10}}>Trigger physical scanner or open camera</div>
+        <button className="btn" style={{width:"100%"}}>📷 Trigger Barcode Scanner</button>
+      </div>
+    </div>
+  </>);
+}
+
+/* ---------- PRODUCTS ---------- */
+function Products(){
+  const [data,live] = useApiData("/products", FALLBACK_PRODUCTS);
+  const {kpis,products} = data;
+  return (<>
+    <Head title="Products Catalog" sub="Main Warehouse" live={live}/>
+    <div className="body">
+      <div className="kpi-row">
+        <div className="kpi"><div className="l">Total SKUs</div><div className="v">{kpis.skus}</div></div>
+        <div className="kpi"><div className="l">Low Stock</div><div className="v badc">{kpis.low}</div></div>
+        <div className="kpi"><div className="l">Facilities</div><div className="v">{kpis.facilities}</div></div>
+      </div>
+      <div className="chips">
+        {["All Categories","Raw Materials","Electronics","Furniture"].map((c,i)=>(
+          <div key={c} className={"chip"+(i===0?" active":"")}>{c}</div>
+        ))}
+      </div>
+      <button className="btn" style={{width:"100%",marginBottom:12}}>+ Add Product</button>
+      {products.map(([name,sku,meta,stock,tone,status,actions])=>(
+        <div className="card" key={sku}>
+          <div style={{display:"flex",justifyContent:"space-between"}}>
+            <div><div className="name">{name}</div><div className="meta">{sku}</div></div>
+            {stock && <div style={{textAlign:"right"}}><div className="name">{stock}</div></div>}
+          </div>
+          <div style={{marginTop:6}}><span className={"pill "+tone}>{status}</span></div>
+          <div className="meta" style={{marginTop:6}}>{meta}</div>
+          <div className="row-actions">
+            {actions.map((a,i)=>(<button key={a} className={"btn"+(i===0?"":" ghost")} style={{fontSize:10.5,padding:"6px 8px"}}>{a}</button>))}
+          </div>
+        </div>
+      ))}
+      <div className="card" style={{textAlign:"center"}}>
+        <div className="meta" style={{marginBottom:8}}>End of Filtered SKUs — all monitored inventories are synchronized with real-time scanners.</div>
+        <button className="btn ghost" style={{width:"100%"}}>⟳ Pull Fresh Barcode Cache</button>
+      </div>
+    </div>
+  </>);
+}
+
+/* ---------- OPERATIONS ---------- */
+function Operations(){
+  const [tab,setTab]=useState(0);
+  const [data,live] = useApiData("/operations", FALLBACK_OPERATIONS);
+  const {items,steps} = data;
+  return (<>
+    <Head title="Inventory Logistics" sub="Operations Hub" badge="● Live Sync" live={live}/>
+    <div className="body">
+      <div className="chips">
+        {["Receipts (8)","Deliveries (19)","Move (5)"].map((c,i)=>(
+          <div key={c} className={"chip"+(tab===i?" active":"")} onClick={()=>setTab(i)}>{c}</div>
+        ))}
+      </div>
+      <div className="chips">
+        {["All Active","Waiting","Ready","Done","Draft"].map((c,i)=>(
+          <div key={c} className={"chip"+(i===0?" active":"")}>{c}</div>
+        ))}
+      </div>
+      <div className="card">
+        {items.map(it=>(
+          <Item key={it[0]} name={it[0]+" · "+it[1]} right={it[4]} tone={it[5]} meta={<>{it[2]}<br/>{it[3]}</>}/>
+        ))}
+      </div>
+      <div className="sec-title">Standard Receipts Workflow</div>
+      <div className="card">
+        {steps.map(([t,d],i)=>(
+          <Item key={t} name={(i+1)+". "+t} meta={d} right={"Step "+(i+1)} tone="muted"/>
+        ))}
+        <button className="btn" style={{width:"100%",marginTop:10}}>+ Create Receipt</button>
+      </div>
+    </div>
+  </>);
+}
+
+/* ---------- TRANSFERS ---------- */
+function Transfers(){
+  const [data,live] = useApiData("/transfers", FALLBACK_TRANSFERS);
+  const {lifecycle,manifests} = data;
+  return (<>
+    <Head title="Internal Logistics" sub="Warehouse Flow &amp; Routing" badge="2 Active Tasks" live={live}/>
+    <div className="body">
+      <div className="sec-title">Warehouse Flow Lifecycle</div>
+      <div className="card">
+        {lifecycle.map(([n,s,t])=>(<Item key={n} name={n} right={s} tone={t}/>))}
+      </div>
+      <div className="sec-title">Transfer Manifests</div>
+      <div className="card">
+        <Item name={manifests[0][0]} tone={manifests[0][2]} right={manifests[0][1]}
+          meta={<>{manifests[0][3]}<br/>{manifests[0][4]}</>}/>
+        <button className="btn" style={{width:"100%",marginBottom:10}}>Confirm Pick &amp; Move</button>
+        <Item name={manifests[1][0]} tone={manifests[1][2]} right={manifests[1][1]}
+          meta={<>{manifests[1][3]}<br/>{manifests[1][4]}</>}/>
+      </div>
+    </div>
+  </>);
+}
+
+/* ---------- SETTINGS ---------- */
+function Settings({onLogout}){
+  const [data,live] = useApiData("/settings", FALLBACK_SETTINGS);
+  const {profile,ops,sec} = data;
+  return (<>
+    <Head title="Settings &amp; Configuration" sub="Warehouse nodes, hardware &amp; operator preferences" live={live}/>
+    <div className="body">
+      <div className="card">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{display:"flex",gap:10}}>
+            <div className="avatar" style={{width:38,height:38}}>AR</div>
+            <div><div className="name">{profile.name}</div><div className="meta">{profile.meta}</div></div>
+          </div>
+          <span style={{fontSize:10.5,color:"var(--accent)"}}>Switch</span>
+        </div>
+      </div>
+      <div className="card">
+        <Item name="Active Station" meta="Main Hub-01" right="4 Connected Hubs" tone="muted"/>
+        <Item name="Storage Locations, Bins & Zones" meta="Configure zone coordinates & capacity limits"/>
+        <Item name="Automated Reorder Thresholds" meta="Dynamic low-line stock alerts based on lead time"/>
+      </div>
+      <div className="sec-title">Hardware &amp; Peripherals</div>
+      <div className="card">
+        <Item name="Zebra TC-58 Rugged" meta="BT 3.2 · Range/Sector #90-C4" right="84%" tone="muted"/>
+        <Item name="Zebra ZD42 Label & Placard" right="Online" tone="ok"/>
+        <div className="item" style={{alignItems:"center"}}>
+          <div><div className="name">Continuous Rapid Laser Scan</div><div className="meta">Bulk barcode ingestion w/o trigger hold</div></div>
+          <Toggle on={true}/>
+        </div>
+      </div>
+      <div className="sec-title">Operations &amp; Rules</div>
+      <div className="card">
+        {ops.map(([n,d,on])=>(
+          <div className="item" style={{alignItems:"center"}} key={n}>
+            <div><div className="name">{n}</div><div className="meta">{d}</div></div>
+            <Toggle on={on}/>
+          </div>
+        ))}
+      </div>
+      <div className="sec-title">Security &amp; Data Cache</div>
+      <div className="card">
+        <div className="item" style={{alignItems:"center"}}>
+          <div><div className="name">{sec[0][0]}</div><div className="meta">{sec[0][1]}</div></div><Toggle on={true}/>
+        </div>
+        <Item name={sec[1][0]} meta={sec[1][1]} right="Sync now" tone="muted"/>
+        <Item name="CISHA &amp; Facility Safety Protocol ↗"/>
+        <Item name="Barcode Symbology Standard SOP 2024 ↗"/>
+      </div>
+      <button className="btn bad" style={{width:"100%"}} onClick={onLogout}>⏻ End Shift &amp; Log Out</button>
+      <div style={{textAlign:"center",fontSize:9.5,color:"var(--muted)",marginTop:12}}>
+        StockSense Mobile v2.4.1 (Build 1189)<br/>SOC2 Type II Certified · End-to-End Encrypted
+      </div>
+    </div>
+  </>);
+}
+
+/* ---------- APP ---------- */
+function App(){
+  const [screen,setScreen]=useState("login"); // login | signup | app
+  const [view,setView]=useState("dashboard");
+  if(screen==="login") return <div className="device"><Login onLogin={()=>setScreen("app")} goSignup={()=>setScreen("signup")}/></div>;
+  if(screen==="signup") return <div className="device"><Signup goLogin={()=>setScreen("login")}/></div>;
+  const views={dashboard:<Dashboard/>,products:<Products/>,operations:<Operations/>,
+    transfers:<Transfers/>,settings:<Settings onLogout={()=>setScreen("login")}/>};
+  const tabs=[["dashboard","▦","Dashboard"],["operations","⇄","Operations"],["products","📦","Products"],
+    ["transfers","⇌","Transfers"],["settings","⚙","Settings"]];
+  return (
+    <div className="device">
+      {views[view]}
+      <div className="tabbar">
+        {tabs.map(([key,ico,label])=>(
+          <button key={key} className={view===key?"active":""} onClick={()=>setView(key)}>
+            <span className="ico">{ico}</span>{label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
